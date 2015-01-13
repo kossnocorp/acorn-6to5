@@ -100,6 +100,8 @@
     // end of the comments. Note that you are not allowed to call the
     // parser from the callback—that will corrupt its internal state.
     onComment: null,
+    // TODO
+    onDelimeter: null,
     // Nodes have their start and end characters offsets recorded in
     // `start` and `end` properties (directly on the node, rather than
     // the `loc` object, which holds line/column data. To also add a
@@ -171,6 +173,10 @@
           comment.range = [start, end];
         comments.push(comment);
       };
+    }
+    if (isArray(options.onDelimeter)) {
+      var delimeters = options.onDelimeter;
+      options.onDelimeter = delimeters.push.bind(delimeters);
     }
     if (options.strictMode) {
       strict = true;
@@ -700,18 +706,51 @@
                         startLoc, options.locations && curPosition());
   }
 
+  function addDelimeter(type) {
+    if (!options.onDelimeter) return;
+
+    options.onDelimeter({
+      type: type,
+      line: tokCurLine,
+      column: tokPos - tokLineStart
+    });
+  }
+
   // Called at the start of the parse and after every token. Skips
   // whitespace and comments, and.
 
   function skipSpace() {
+    // ASCII char codes cheat sheet:
+    // ...
+    // 8  BS (Back Space)
+    // 9  HT (TAB / Horizontal Tab)
+    // 10 LF (Line Feed)
+    // 11 VT (Vertical Tab)
+    // 12 FF (Form Feed)
+    // 13 CR (Carriage Return)
+    // 14 SO (Shift Out / X-On)
+    // 15 SI (Shift In / X-Off)
+    // ...
+    // 42 '*'
+    // ...
+    // 47 '/'
+    // ...
+    // 160
+    // ...
+    // 32 Space
+    // ...
+    // 8232 LINE SEPARATOR (U+2028; unicode)
+    // 8233 PARAGRAPH SEPARATOR (U+2029; unicode)
+    // ...
     while (tokPos < inputLen) {
       var ch = input.charCodeAt(tokPos);
       if (ch === 32) { // ' '
+        addDelimeter(ch);
         ++tokPos;
-      } else if (ch === 13) {
+      } else if (ch === 13) { // CR (Carriage Return)
         ++tokPos;
         var next = input.charCodeAt(tokPos);
-        if (next === 10) {
+        if (next === 10) { // LF (Line Feed)
           ++tokPos;
         }
         if (options.locations) {

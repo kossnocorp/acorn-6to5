@@ -26,6 +26,9 @@
         if (expected.onToken = testOpts.onToken) {
           testOpts.onToken = [];
         }
+        if (expected.onDelimeter = testOpts.onDelimeter) {
+          testOpts.onDelimeter = [];
+        }
         var ast = parse(test.code, testOpts);
         if (test.error) {
           if (config.loose) {

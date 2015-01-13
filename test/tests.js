@@ -28845,3 +28845,14 @@ test("#!/usr/bin/node\n;", {}, {
     end: 15
   }]
 });
+
+test('var x = 1 + 2;', {}, {
+  onDelimeter: [
+    { type: 32, line: 1, column: 3 },
+    { type: 32, line: 1, column: 5 },
+    { type: 32, line: 1, column: 7 },
+    { type: 32, line: 1, column: 9 },
+    { type: 32, line: 1, column: 11 }
+  ]
+});
+
